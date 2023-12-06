@@ -1,0 +1,11 @@
+*/input.txt
+*__pycache__
+utils/py/aoc.egg-info
+*.pytest_cache
+*.cache
+*.pyc
+*.swp
+*.o
+*.hi
+*solver
+aoc_session.sh
