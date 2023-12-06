@@ -41,44 +41,48 @@ def solve1(data):
     return min(out)
 
 
+def get_mapping_ranges(inp_list, mapping):
+    out = []
+    for dst, src, map_rangelen in mapping:
+        new_inp = []
+        for inp, inp_rangelen in inp_list:
+            boundaries = sorted(set([inp, inp + inp_rangelen, src, src + map_rangelen]))
+            splits = []
+            for bound in boundaries:
+                if bound < inp or bound > inp + inp_rangelen:
+                    continue
+                splits.append(bound)
+            for start, stop in zip(splits, splits[1:]):
+                if (
+                    src <= start < src + map_rangelen
+                    and src <= stop <= src + map_rangelen
+                ):
+                    # inside
+                    out.append(
+                        (
+                            (start, stop - start),
+                            (dst + (start - src), stop - start),
+                        )
+                    )
+                else:
+                    # outside
+                    new_inp.append(
+                        (start, stop - start)
+                    )  # <- goes to input for next step
+        inp_list = new_inp
+    out += [(x, x) for x in inp_list]  # add left over inputs
+    return out
+
+
 # PART 2
 @measure_time
 def solve2(data):
     seeds, mappings = data
-
-    def get_mapping_ranges(inp_list, mapping):
-        out = []
-        for dst, src, map_rangelen in mapping:
-            new_inp = []
-            for inp, inp_rangelen in inp_list:
-                boundaries = sorted(
-                    set([inp, inp + inp_rangelen, src, src + map_rangelen])
-                )
-                splits = []
-                for bound in boundaries:
-                    if bound < inp or bound > inp + inp_rangelen:
-                        continue
-                    splits.append(bound)
-                for start, stop in zip(splits, splits[1:]):
-                    if (
-                        src <= start < src + map_rangelen
-                        and src < stop < src + map_rangelen
-                    ):
-                        # inside
-                        out.append((dst + (start - src), stop - start))
-                    else:
-                        # outside
-                        new_inp.append(
-                            (start, stop - start)
-                        )  # <- goes to input for next step
-            inp_list = new_inp
-        out += inp_list  # add left over inputs
-        return out
-
-    inp = list(zip(seeds, seeds[1:]))
+    inp = list(zip(seeds[::2], seeds[1::2]))
     for header, mapping in mappings:
         n_before = sum(x for _, x in inp)
         inp = get_mapping_ranges(inp, mapping)
+        inp = [x for _, x in inp]
         assert n_before == sum(x for _, x in inp)
     return min(x for x, _ in inp)
 

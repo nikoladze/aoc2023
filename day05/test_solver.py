@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from solver import parse, solve1, solve2
 
