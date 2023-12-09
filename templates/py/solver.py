@@ -1,3 +1,4 @@
+from pathlib import Path
 import sys
 
 from aoc import utils
@@ -23,7 +24,7 @@ def solve2(data):
 
 
 if __name__ == "__main__":
-    data = parse(open("input.txt").read().strip())
+    data = parse(open(Path(__file__).parent / "input.txt").read())
     print("Part 1: {}".format(solve1(data)))
     print("Part 2: {}".format(solve2(data)))
 
