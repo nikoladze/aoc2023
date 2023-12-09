@@ -1,4 +1,6 @@
-# AoC
+# AoC 2023
+
+Based on [@davekch's template](https://github.com/davekch/aoc)
 
 ## Templates, utilitites and download-script
 
