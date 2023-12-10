@@ -142,7 +142,6 @@ def solve2(data, start_tile="L"):
         dx, dy = move(dx, dy, tile)
 
     # find adjacent left and right tiles
-    # TODO: what is left and right of start?
     x, y = find_start()
     dx, dy = first_move(x, y)
     lefts, rights = set(), set()
@@ -163,50 +162,52 @@ def solve2(data, start_tile="L"):
             break
         dx, dy = move(dx, dy, tile)
 
-    #print(lefts, rights)
-
     # find everything connected to left and right
     def expand(coords):
-        def _expand(x, y):
-            if (x, y) in coords:
-                return
+        seen = set()
+        stack = list(coords)
+        while stack:
+            x, y = stack.pop()
+            if (x, y) in seen:
+                continue
+            seen.add((x, y))
             if (x, y) in on_path:
-                return
+                continue
+            if not (0 <= x < len(data[0])):
+                continue
+            if not (0 <= y < len(data)):
+                continue
+            coords.add((x, y))
             for dx, dy in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
                 xx, yy = x + dx, y - dy
-                if (xx, yy) in coords:
-                    continue
-                if (xx, yy) in on_path:
-                    continue
-                _expand(xx, yy)
+                if (xx, yy) not in stack:
+                    stack.append((xx, yy))
 
-        for x, y in coords:
-            _expand(x, y)
 
     expand(lefts)
     expand(rights)
 
+    def printout():
+        for y, row in enumerate(data):
+            for x, tile in enumerate(row):
+                coord = (x, y)
+                if coord in lefts:
+                    print("l", end="")
+                elif coord in rights:
+                    print("r", end="")
+                else:
+                    print(tile, end="")
+            print("")
+        print()
+
+    #printout()
+
     # decide where outside is ;)
     # -> for now just use smaller number as inside :P
-
-    for y, row in enumerate(data):
-        for x, tile in enumerate(row):
-            coord = (x, y)
-            if coord in lefts:
-                print("l", end="")
-            elif coord in rights:
-                print("r", end="")
-            else:
-                print(tile, end="")
-        print("")
-    print()
-
-    #return len(on_path) // 2
     return min(len(lefts), len(rights))
 
 
-# if __name__ == "__main__":
-if True:
+if __name__ == "__main__":
     data = parse(open(Path(__file__).parent / "input.txt").read())
     print("Part 1: {}".format(solve1(data)))
     print("Part 2: {}".format(solve2(data)))
