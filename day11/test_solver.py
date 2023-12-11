@@ -1,5 +1,5 @@
 import pytest
-from solver import parse, solve1, solve2
+from solver import parse, solve1, solve2, solve
 
 TESTDATA = """
 ...#......
@@ -32,5 +32,5 @@ def test_solve1(parsed_data):
 
 # PART 2
 def test_solve2(parsed_data):
-    solution = solve2(parsed_data)
-    # asserts go here
+    assert solve(parsed_data, 10) == 1030
+    assert solve(parsed_data, 100) == 8410
