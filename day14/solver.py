@@ -46,15 +46,17 @@ def roll(grid, rocks, di, dj):
 def solve1(data):
     grid = list(map(list, data))
     roll(grid, find_rocks(grid), di=-1, dj=0)
-    solution = 0
-    for i, j in find_rocks(grid):
-        solution += len(grid) - i
-    return solution
+    return sum(len(grid) - i for i, _ in find_rocks(grid))
 
 
 def print_grid(grid):
     print()
     print("\n".join(["".join(_line) for _line in grid]))
+
+
+def roll_cycle(grid):
+    for di, dj in [(-1, 0), (0, -1), (1, 0), (0, 1)]:
+        roll(grid, find_rocks(grid), di=di, dj=dj)
 
 
 # PART 2
@@ -67,21 +69,15 @@ def solve2(data, ncycles=1000000000):
         if rocks in seen:
             break
         seen[rocks] = cycle
-        for di, dj in [(-1, 0), (0, -1), (1, 0), (0, 1)]:
-            roll(grid, find_rocks(grid), di=di, dj=dj)
+        roll_cycle(grid)
     loop_offset = seen[rocks]
     loop_len = cycle - loop_offset
     n_loops = ncycles // loop_len
-
     n_todo = loop_offset + (ncycles - loop_offset) % loop_len
     grid = list(map(list, data))
     for cycle in range(n_todo):
-        for di, dj in [(-1, 0), (0, -1), (1, 0), (0, 1)]:
-            roll(grid, find_rocks(grid), di=di, dj=dj)
-    solution = 0
-    for i, j in find_rocks(grid):
-        solution += len(grid) - i
-    return solution
+        roll_cycle(grid)
+    return sum(len(grid) - i for i, _ in find_rocks(grid))
 
 
 if __name__ == "__main__":
