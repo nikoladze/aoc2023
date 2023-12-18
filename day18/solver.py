@@ -18,37 +18,39 @@ def parse(raw_data):
     return out
 
 
-# PART 1
-@measure_time
-def solve1(data):
-    directions = {"R": (1, 0), "L": (-1, 0), "D": (0, -1), "U": (0, 1)}
+DIRECTIONS = {"R": (1, 0), "L": (-1, 0), "D": (0, -1), "U": (0, 1)}
+
+
+def count_area(instructions):
     area = 0
     trench = 0
     x, y = (0, 0)
-    for ins, n, color in data:
-        dx, dy = directions[ins]
+    for ins, n in instructions:
+        dx, dy = DIRECTIONS[ins]
         x, y = x + n * dx, y + n * dy
         area -= x * n * dy
         trench += n
     return area + trench // 2 + 1
 
+
+# PART 1
+@measure_time
+def solve1(data):
+    return count_area((ins, n) for ins, n, _ in data)
+
+
 # PART 2
 @measure_time
 def solve2(data):
-    directions = {"R": (1, 0), "L": (-1, 0), "D": (0, -1), "U": (0, 1)}
-    ins_map = "RDLU"
-    area = 0
-    trench = 0
-    x, y = (0, 0)
-    for ins, n, color in data:
-        color = color.replace("#", "").replace("(", "").replace(")", "")
-        n = int(color[:-1], 16)
-        ins = ins_map[int(color[-1])]
-        dx, dy = directions[ins]
-        x, y = x + n * dx, y + n * dy
-        area -= x * n * dy
-        trench += n
-    return area + trench // 2 + 1
+    def instructions():
+        for ins, n, color in data:
+            color = color[2:-1]
+            n = int(color[:-1], 16)
+            ins = "RDLU"[int(color[-1])]
+            yield ins, n
+
+    return count_area(instructions())
+
 
 if __name__ == "__main__":
     data = parse(open(Path(__file__).parent / "input.txt").read())
@@ -60,4 +62,3 @@ if __name__ == "__main__":
         print(f"{func:8}{time}s")
     print("----------------")
     print("total   {}s".format(sum(t for _, t in measure_time.times)))
-
