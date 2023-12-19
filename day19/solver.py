@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-from pathlib import Path
 import sys
+from functools import reduce
+from operator import mul
+from pathlib import Path
 
 from aoc import utils
 
@@ -17,7 +19,10 @@ def parse(raw_data):
         instructions = instructions[:-1].split(",")
         instructions = [ins.split(":") for ins in instructions]
         workflows[name] = instructions
-    ratings = [dict(fields.split("=") for fields in rating[1:-1].split(",")) for rating in ratings.splitlines()]
+    ratings = [
+        dict(fields.split("=") for fields in rating[1:-1].split(","))
+        for rating in ratings.splitlines()
+    ]
     ratings = [{k: int(v) for k, v in rating.items()} for rating in ratings]
     return workflows, ratings
 
@@ -52,10 +57,8 @@ def solve1(data):
     return solution
 
 
-def find_bounds(workflows, name, bounds, leaves, indent=""):
+def find_bounds(workflows, name, bounds, leaves):
     workflow = workflows[name]
-    print()
-    print(indent, f"{name=}, {workflow=}")
     for ins in workflow:
         bounds = {k: list(v) for k, v in bounds.items()}
         bounds_else = bounds
@@ -66,7 +69,6 @@ def find_bounds(workflows, name, bounds, leaves, indent=""):
                 val = int(expr[2:])
                 lower, upper = bounds[key]
                 lower_else, upper_else = lower, upper
-                print(indent, f"{lower=}, {upper=}")
                 if op == "<":
                     # (lower, upper) < val
                     if lower >= val:
@@ -82,19 +84,17 @@ def find_bounds(workflows, name, bounds, leaves, indent=""):
                 else:
                     assert False
                 bounds[key] = (lower, upper)
-                print(indent, f"after {expr=}: {lower=}, {upper=}, {bounds=}")
                 bounds_else = {k: list(v) for k, v in bounds.items()}
                 bounds_else[key] = (lower_else, upper_else)
             case (res,):
                 pass
         match res:
             case "A":
-                print(indent, f"append {bounds=}")
                 leaves.append(bounds)
             case "R":
                 pass
             case other:
-                find_bounds(workflows, other, bounds, leaves=leaves, indent=indent+"    ")
+                find_bounds(workflows, other, bounds, leaves=leaves)
         bounds = bounds_else
 
 
@@ -103,16 +103,12 @@ def find_bounds(workflows, name, bounds, leaves, indent=""):
 def solve2(data):
     workflows, _ = data
     bounds = {key: (1, 4000) for key in "xmas"}
-    solution = 0
     leaves = []
-    bounds = find_bounds(workflows, "in", bounds, leaves=leaves)
-    for l in leaves:
-        sub = 1
-        print(l)
-        for lower, upper in l.values():
-            sub *= (upper - lower) + 1 #?
-        solution += sub
-    return solution
+    find_bounds(workflows, "in", bounds, leaves=leaves)
+    return sum(
+        reduce(mul, ((upper - lower) + 1 for lower, upper in l.values()))
+        for l in leaves
+    )
 
 
 if __name__ == "__main__":
@@ -125,4 +121,3 @@ if __name__ == "__main__":
         print(f"{func:8}{time}s")
     print("----------------")
     print("total   {}s".format(sum(t for _, t in measure_time.times)))
-
