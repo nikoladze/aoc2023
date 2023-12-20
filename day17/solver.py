@@ -17,10 +17,10 @@ def parse(raw_data):
 
 def search_min_cost(data, min_steps, max_steps):
     bottom_right = len(data) - 1, len(data[0]) - 1
-    q = [(0, 0, 0, 0, 0, 0, 0)]
+    q = [(0, 0, 0, 0, 0, 0)]
     min_cost = {(0, 0, 0): {(0, 0): 0}}
     while q:
-        heur, cost, n, di, dj, i, j = heapq.heappop(q)
+        cost, n, di, dj, i, j = heapq.heappop(q)
         for new_di, new_dj in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
             new_n = 0
             if (di, dj) != (0, 0):
@@ -45,8 +45,6 @@ def search_min_cost(data, min_steps, max_steps):
                 continue
 
             new_cost = cost + int(data[new_i][new_j])
-            new_heur = new_cost + abs(i - j)  # prefer to move along diagonal
-
             this_min_cost = min_cost.setdefault((new_di, new_dj, new_n), {})
             try:
                 if this_min_cost[new_i, new_j] <= new_cost:
@@ -55,7 +53,7 @@ def search_min_cost(data, min_steps, max_steps):
                 pass
             min_cost[new_di, new_dj, new_n][new_i, new_j] = new_cost
 
-            heapq.heappush(q, (new_heur, new_cost, new_n, new_di, new_dj, new_i, new_j))
+            heapq.heappush(q, (new_cost, new_n, new_di, new_dj, new_i, new_j))
 
     return min(
         filter(
