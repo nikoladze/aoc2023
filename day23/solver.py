@@ -15,7 +15,6 @@ def parse(raw_data):
 
 
 def print_grid(data, seen, cur):
-    #input()
     print()
     for i, row in enumerate(data):
         for j, c in enumerate(row):
@@ -27,6 +26,7 @@ def print_grid(data, seen, cur):
                 print(c, end="")
         print()
 
+
 # PART 1
 @measure_time
 def solve1(data):
@@ -36,18 +36,11 @@ def solve1(data):
     lens = []
     while q:
         seen, (i, j) = q.pop()
-
-        # print_grid(data, seen, (i, j))
-        # print((i, j), end)
-
         if (i, j) == end:
             lens.append(len(seen))
+            continue
         for di, dj in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
             new_i, new_j = (i + di, j + dj)
-            if not (0 <= new_i < len(data)):
-                continue
-            if not (0 <= new_j < len(data[0])):
-                continue
             c = data[new_i][new_j]
             if c == "#":
                 continue
@@ -56,98 +49,58 @@ def solve1(data):
             if (new_i, new_j) in seen:
                 continue
             q.append((seen | {(new_i, new_j)}, (new_i, new_j)))
-
     return max(lens)
 
-# PART 2
-@measure_time
-def solve2(data):
-    # q = [(frozenset(), (0, 1))]
-    # end = (len(data) - 1, len(data[0]) - 2)
-    # lens = []
-    # while q:
-    #     seen, (i, j) = q.pop()
 
-    #     # import os
-    #     # os.system("clear")
-    #     # print_grid(data, seen, (i, j))
-
-    #     if (i, j) == end:
-    #         lens.append(len(seen))
-    #         continue
-    #     for di, dj in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
-    #         new_i, new_j = (i + di, j + dj)
-    #         if not (0 <= new_i < len(data)):
-    #             continue
-    #         if not (0 <= new_j < len(data[0])):
-    #             continue
-    #         c = data[new_i][new_j]
-    #         if c == "#":
-    #             continue
-    #         if (new_i, new_j) in seen:
-    #             continue
-    #         q.append((seen | {(new_i, new_j)}, (new_i, new_j)))
-
-    # return max(lens)
-    #
-
-    # should never run outside grid (because of walls)
-
+def get_graph(data):
     end = (len(data) - 1, len(data[0]) - 2)
-    q = [((0, 1), (1, 1))]
+    q = [((0, 1), (1, 1), 1)]
     seen = set([(0, 1)])
     graph = defaultdict(set)
     junctions = set()
     while q:
-        from_pos, (i, j) = q.pop()
-        if (i, j) == end:
-            continue
+        from_pos, (i, j), n = q.pop()
         seen.add((i, j))
-        n = 0
-        while True:
-            #input()
-            #print_grid(data, seen, (i, j))
-            #print(f"{(i, j)=}")
+        options = []
+        junction = None
+        for di, dj in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
             if (i, j) == end:
-                graph[from_pos].add(((i, j), n))
-                break
-            options = []
-            for di, dj in [(-1, 0), (1, 0), (0, 1), (0, -1)]:
-                new_i, new_j = (i + di, j + dj)
-                if data[new_i][new_j] == "#":
-                    continue
-                if (new_i, new_j) == from_pos:
-                    continue
-                if (new_i, new_j) in seen and (new_i, new_j) not in junctions:
-                    continue
-                options.append((new_i, new_j))
-            if not options:
-                # deadend
-                break
-            if len(options) == 1:
-                # go to only possible direction
-                i, j = options.pop()
-                seen.add((i, j))
-                n += 1
-                if (i, j) in junctions:
-                    #print(f"junction at {(i, j, n)=} reachable {from_pos=}")
-                    graph[from_pos].add(((i, j), n))
-                    break
                 continue
-            if len(options) > 1:
-                # reached a junction
-                #print(f"junction at {(i, j, n)=} reachable {from_pos=}")
-                junctions.add((i, j))
-                graph[from_pos].add(((i, j), n))
-                for next_pos in options:
-                    q.append(((i, j), next_pos))
-                break
+            new_i, new_j = (i + di, j + dj)
+            if data[new_i][new_j] == "#":
+                continue
+            if (new_i, new_j) in junctions:
+                junction = (new_i, new_j)
+            if (new_i, new_j) in seen:
+                continue
+            options.append((new_i, new_j))
+        if len(options) > 1:
+            junctions.add((i, j))
+        if not options or len(options) > 1:
+            # reached a junction or dead end
+            if junction:
+                # move to junction if we are just before one
+                i, j = junction
+                n += 1
+            graph[from_pos].add(((i, j), n))
+            from_pos = (i, j)
+            n = 0
+        for new_i, new_j in options:
+            q.append((from_pos, (new_i, new_j), n + 1))
 
-    #print(graph)
+    # make graph symmetric
     for from_pos, dsts in list(graph.items()):
         for dst, n in list(dsts):
             graph[dst].add((from_pos, n))
 
+    return graph
+
+
+# PART 2
+@measure_time
+def solve2(data):
+    graph = get_graph(data)
+    end = (len(data) - 1, len(data[0]) - 2)
     q = [(frozenset(), (0, 1), 0)]
     lens = []
     while q:
@@ -157,10 +110,8 @@ def solve2(data):
         for dst, n in graph[i, j]:
             if dst in seen:
                 continue
-            q.append((seen | {dst}, dst, tot + n + 1))
-
+            q.append((seen | {dst}, dst, tot + n))
     return max(lens)
-
 
 
 if __name__ == "__main__":
@@ -173,4 +124,3 @@ if __name__ == "__main__":
         print(f"{func:8}{time}s")
     print("----------------")
     print("total   {}s".format(sum(t for _, t in measure_time.times)))
-
