@@ -19,6 +19,36 @@ def parse(raw_data):
     return out
 
 
+def disconnected(graph, node1, node2):
+    graph = {k: set(v) for k, v in graph.items()}
+    for src, dsts in graph.items():
+        for dst in list(dsts):
+            if src == node1 and dst == node2:
+                dsts.remove(node2)
+            if dst == node1 and src == node2:
+                dsts.remove(node1)
+    return graph
+
+
+def try_partition(graph, node1, node2):
+    cluster1, cluster2 = set(), set()
+    q = deque([(node1, cluster1), (node2, cluster2)])
+    seen = set()
+    while q:
+        node, cluster = q.popleft()
+        if node in seen:
+            continue
+        seen.add(node)
+        cluster.add(node)
+        if not node in graph:
+            continue
+        for child in graph[node]:
+            if child in seen:
+                continue
+            q.append((child, cluster))
+    return cluster1, cluster2
+
+
 # PART 1
 @measure_time
 def solve1(data):
@@ -34,37 +64,6 @@ def solve1(data):
             if not (dst, src) in edges:
                 edges.add((src, dst))
 
-    def disconnected(graph, node1, node2):
-        graph = {k: set(v) for k, v in graph.items()}
-        for src, dsts in graph.items():
-            for dst in list(dsts):
-                if src == node1 and dst == node2:
-                    dsts.remove(node2)
-                if dst == node1 and src == node2:
-                    dsts.remove(node1)
-        return graph
-
-    def try_partition(graph, node1, node2):
-        cluster1, cluster2 = set(), set()
-        q = deque([(node1, cluster1), (node2, cluster2)])
-        seen = set()
-        while q:
-            node, cluster = q.popleft()
-            # print(node, id(cluster))
-            if node in seen:
-                # print("seen")
-                continue
-            seen.add(node)
-            cluster.add(node)
-            if not node in graph:
-                continue
-            for child in graph[node]:
-                if child in seen:
-                    continue
-                q.append((child, cluster))
-        return cluster1, cluster2
-
-    print()
     ncon_list = []
     for src, dst in edges:
         for src, dst in [
@@ -80,20 +79,13 @@ def solve1(data):
                 or (n2 in cluster1 and n1 in cluster2)
                 for n1, n2 in edges
             )
-            print(n_connecting_edges)
             ncon_list.append((n_connecting_edges, (src, dst)))
-            # print(try_partition(graph, "cmg", "bvb"))
-            # print(f"{s=},{d=}, {n_connecting_edges=}")
             if n_connecting_edges == 3:
-                print(cluster1, cluster2)
-                import pickle
-
-                with open("solution.pkl", "wb") as f:
-                    pickle.dump((cluster1, cluster2), f)
-                print(len(cluster1) + len(cluster2), len(nodes), len(set(graph.keys())))
+                # already found a solution
                 return len(cluster1) * len(cluster2)
 
-    promising = []  # most promising edges first
+    # if not, try combinations, starting with most promising edges first
+    promising = []
     seen = set()
     for _, (src, dst) in sorted(ncon_list):
         if (src, dst) in seen or (dst, src) in seen:
@@ -107,7 +99,6 @@ def solve1(data):
             if comb in seen:
                 continue
             seen.add(comb)
-            print(f"trying {comb=}")
             (s1, d1), (s2, d2), (s3, d3) = comb
             dis_graph = disconnected(
                 disconnected(disconnected(graph, s1, d1), s2, d2), s3, d3
@@ -124,7 +115,7 @@ def solve1(data):
                 or (n2 in cluster1 and n1 in cluster2)
                 for n1, n2 in edges_without
             ):
-                print("works!")
+                # found solution
                 return len(cluster1) * len(cluster2)
 
 
