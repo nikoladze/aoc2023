@@ -20,8 +20,10 @@ def parse(raw_data):
 
 
 @cache
-def total_count(pattern, counts, rest=0):
+def _total_count(pattern, counts):
     total = 0
+    rest = counts[0]
+    counts = counts[1:]
     for i, c in enumerate(pattern):
         try:
             if c == "#":
@@ -40,7 +42,7 @@ def total_count(pattern, counts, rest=0):
 
         if c == "?":
             for cnew in [".", "#"]:
-                total += total_count(cnew + pattern[i + 1 :], counts, rest)
+                total += _total_count(cnew + pattern[i + 1 :], (rest,) + counts)
             return total
 
     if counts and counts[0] != rest or len(counts) > 1:
@@ -52,12 +54,16 @@ def total_count(pattern, counts, rest=0):
         return 1
 
 
+def total_count(pattern, counts):
+    return _total_count(pattern, (0,) + tuple(counts))
+
+
 # PART 1
 @measure_time
 def solve1(data):
     solution = 0
     for line, counts in data:
-        solution += total_count(line, tuple(counts))
+        solution += total_count(line, counts)
     return solution
 
 
@@ -68,7 +74,7 @@ def solve2(data):
     for line, counts in data:
         line = "?".join([line] * 5)
         counts = counts * 5
-        solution += total_count(line, tuple(counts))
+        solution += total_count(line, counts)
     return solution
 
 
