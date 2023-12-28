@@ -33,7 +33,7 @@ def test_parse():
     ],
 )
 def test_total_count_1(pattern, counts, value):
-    assert total_count(pattern, counts) == value
+    assert total_count(pattern, tuple(counts)) == value
 
 
 @pytest.mark.parametrize(
@@ -51,7 +51,7 @@ def test_total_count_1(pattern, counts, value):
 def test_total_count_5(pattern, counts, value):
     pattern = "?".join([pattern] * 5)
     counts = 5 * counts
-    assert total_count(pattern, counts) == value
+    assert total_count(pattern, tuple(counts)) == value
 
 
 # PART 1
