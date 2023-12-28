@@ -48,9 +48,6 @@ def total_count(pattern, counts, rest=0):
         # -> not possible
         return 0
     else:
-        if counts:
-            assert counts[0] == rest
-        assert len(counts) < 2
         # this is possible
         return 1
 
