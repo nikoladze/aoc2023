@@ -9,3 +9,4 @@ utils/py/aoc.egg-info
 *.hi
 *solver
 aoc_session.sh
+.ipynb_checkpoints
